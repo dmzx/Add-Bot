@@ -594,32 +594,50 @@ class m1_initial_file extends container_aware_migration
 
 		foreach ($bots as $bot_name => $bot_ary)
 		{
-			$user_row = [
-				'user_type'				=> USER_IGNORE,
-				'group_id'				=> $group_id,
-				'username'				=> $bot_name,
-				'user_regdate'			=> time(),
-				'user_password'			=> '',
-				'user_colour'			=> '9E8DA7',
-				'user_email'			=> '',
-				'user_lang'				=> $this->config['default_lang'],
-				'user_style'			=> 1,
-				'user_timezone'			=> 0,
-				'user_allow_massemail'	=> 0,
-			];
+			$sql = 'SELECT user_id
+				FROM ' . USERS_TABLE . '
+				WHERE user_type = ' . USER_IGNORE . "
+					AND username_clean = '" . $this->db->sql_escape(utf8_clean_string($bot_name)) . "'";
+			$result = $this->db->sql_query($sql);
+			$bot_user_id = (int) $this->db->sql_fetchfield('user_id');
+			$this->db->sql_freeresult($result);
 
-			$user_id = user_add($user_row);
-
-			if ($user_id)
+			if ($bot_user_id)
 			{
-				$sql = 'INSERT INTO ' . BOTS_TABLE . ' ' . $this->db->sql_build_array('INSERT', array(
-					'bot_active'	=> 1,
-					'bot_name'		=> $bot_name,
-					'user_id'		=> $user_id,
-					'bot_agent'		=> $bot_ary[0],
-					'bot_ip'		=> $bot_ary[1])
-				);
-				$this->db->sql_query($sql);
+				$sql = 'UPDATE ' . BOTS_TABLE . "
+					SET bot_agent = '" .	$this->db->sql_escape($bot_ary[0]) . "'
+					WHERE user_id = $bot_user_id";
+				$this->sql_query($sql);
+			}
+			else
+			{
+				$user_row = [
+					'user_type'				=> USER_IGNORE,
+					'group_id'				=> $group_id,
+					'username'				=> $bot_name,
+					'user_regdate'			=> time(),
+					'user_password'			=> '',
+					'user_colour'			=> '9E8DA7',
+					'user_email'			=> '',
+					'user_lang'				=> $this->config['default_lang'],
+					'user_style'			=> 1,
+					'user_timezone'			=> 0,
+					'user_allow_massemail'	=> 0,
+				];
+
+				$user_id = user_add($user_row);
+
+				if ($user_id)
+				{
+					$sql = 'INSERT INTO ' . BOTS_TABLE . ' ' . $this->db->sql_build_array('INSERT', array(
+						'bot_active'	=> 1,
+						'bot_name'		=> (string) $bot_name,
+						'user_id'		=> (int) $user_id,
+						'bot_agent'		=> (string) $bot_ary[0],
+						'bot_ip'		=> (string) $bot_ary[1]
+					));
+					$this->db->sql_query($sql);
+				}
 			}
 		}
 	}

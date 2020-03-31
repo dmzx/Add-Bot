@@ -3,8 +3,8 @@
 	"type": "phpbb-extension",
 	"description": "Adds more Bots to your forum.",
 	"homepage": "https://www.dmzx-web.net",
-	"version": "1.0.0",
-	"time": "2020-03-26",
+	"version": "1.0.1",
+	"time": "2020-03-31",
 	"keywords": [
 		"phpbb",
 		"extension",
